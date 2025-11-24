@@ -3,18 +3,54 @@ import pandas as pd
 import io
 
 # 设置网页配置
-st.set_page_config(page_title="Peppermayo专用数据归类系统（测试阶段）", page_icon="📂")
+st.set_page_config(page_title="Peppermayo 自动发票助手", page_icon="📊")
 
-st.title("🧾 Peppermayo 自动数据归类")
-st.markdown("### 上传 Manifest -> 自动归类 -> 下载数据文件")
-st.info("💡 提示：您的文件是在云端内存中处理的，处理完即刻销毁，不会保存任何数据，请放心使用。文件下载后需检查是否有重复的HS CODE被用在了不同的产品类型里，如果有，请手动修改！")
+# --- 🔐 密码保护功能开始 ---
+def check_password():
+    """检查密码是否正确"""
+    if "password" not in st.secrets:
+        st.error("⚠️ 未设置密码，请在 Streamlit Secrets 中配置！")
+        return False
+
+    def password_entered():
+        if st.session_state["password"] == st.secrets["password"]:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # 不保存密码，只保存状态
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # 第一次打开，显示输入框
+        st.text_input("🔒 请输入公司访问密码", type="password", on_change=password_entered, key="password")
+        return False
+    elif not st.session_state["password_correct"]:
+        # 密码错了，提示错误
+        st.text_input("🔒 请输入公司访问密码", type="password", on_change=password_entered, key="password")
+        st.error("❌ 密码错误，请重试")
+        return False
+    else:
+        # 密码正确
+        return True
+
+if not check_password():
+    st.stop()  # ⛔️ 密码不对，立刻停止运行下面的代码
+# --- 🔐 密码保护功能结束 ---
+
+# 下面是您原来的所有功能代码，不用动 #
+st.title("🧾 Peppermayo 自动发票生成器")
+st.markdown("### 上传 Manifest -> 自动归类 + 智能 HS Code -> 下载发票")
+st.info("💡 提示：您的文件是在云端内存中处理的，处理完即刻销毁，不会保存任何数据，请放心使用。")
 st.markdown("---")
 
-# 上传区域
+# ... (此处省略您原来的 process_data 函数和逻辑，保持原样即可) ...
+# 请把您原来 app.py 剩下的代码完整的接在这里
+# 包括 uploaded_file = st.file_uploader(...) 及其后面的所有内容
+
 uploaded_file = st.file_uploader("📂 请把 Manifest (Excel/CSV) 拖到这里", type=['xlsx', 'csv'])
 
 def process_data(file):
-    # 读取文件
+    # ... (保持原来的函数内容不变) ...
+    # 为了节省篇幅，这里不重复显示，请确保您原来的逻辑都在
     try:
         if file.name.lower().endswith('.csv'):
             try:
@@ -27,7 +63,6 @@ def process_data(file):
         st.error(f"读取失败: {e}")
         return None
 
-    # 寻找列名
     def get_col(df, candidates):
         for col in candidates:
             if col in df.columns: return df[col]
@@ -43,7 +78,6 @@ def process_data(file):
         st.error("❌ 错误：找不到‘产品描述’列，请检查表格表头！")
         return None
 
-    # 归类逻辑
     def categorize(x):
         s = str(x).lower()
         if 'dress' in s or 'gown' in s: return 'Dresses'
@@ -65,7 +99,6 @@ def process_data(file):
     else:
         df['HS_Code'] = ''
 
-    # 智能 HS Code 选择
     def select_best_hscode(series):
         valid_codes = [c for c in series if c and str(c).strip() != '']
         if not valid_codes: return ''
@@ -73,7 +106,6 @@ def process_data(file):
         if zeros_codes: return pd.Series(zeros_codes).mode()[0]
         return pd.Series(valid_codes).mode()[0]
 
-    # 汇总
     summary = df.groupby('Category').agg({
         'HS_Code': select_best_hscode,
         'Qty': 'sum',
@@ -83,7 +115,6 @@ def process_data(file):
 
     summary.columns = ['Goods of Description', 'HS CODE', 'Unit', 'Amount', 'Country of origin']
 
-    # 合计行
     total_unit = summary['Unit'].sum()
     total_amount = summary['Amount'].sum()
     total_row = pd.DataFrame([{
