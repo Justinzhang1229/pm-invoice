@@ -3,7 +3,7 @@ import pandas as pd
 import io
 
 # 设置网页配置
-st.set_page_config(page_title="Peppermayo专用数据归类系统（测试阶段）", page_icon="📊")
+st.set_page_config(page_title="Peppermayo专用数据归类系统（测试阶段）", page_icon="📂")
 
 st.title("🧾 Peppermayo 自动数据归类")
 st.markdown("### 上传 Manifest -> 自动归类 -> 下载数据文件")
