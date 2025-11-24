@@ -2,55 +2,69 @@ import streamlit as st
 import pandas as pd
 import io
 
-# 设置网页配置
+# 1. 设置网页配置 (使用图表 Emoji 代表 Excel)
 st.set_page_config(page_title="Peppermayo 自动发票助手", page_icon="📊")
 
-# --- 🔐 密码保护功能开始 ---
-def check_password():
-    """检查密码是否正确"""
-    if "password" not in st.secrets:
-        st.error("⚠️ 未设置密码，请在 Streamlit Secrets 中配置！")
-        return False
+# --- 🔐 登录保护功能 (开始) ---
+def check_login():
+    """检查用户名和密码"""
+    # 初始化 session state
+    if "login_success" not in st.session_state:
+        st.session_state["login_success"] = False
 
-    def password_entered():
-        if st.session_state["password"] == st.secrets["password"]:
-            st.session_state["password_correct"] = True
-            del st.session_state["password"]  # 不保存密码，只保存状态
+    # 定义验证逻辑
+    def verify_login():
+        user = st.session_state.get("input_user", "")
+        pwd = st.session_state.get("input_password", "")
+        
+        # 从 Streamlit Secrets 获取刚才设置的账号密码
+        if "admin_username" in st.secrets and "admin_password" in st.secrets:
+            correct_user = st.secrets["admin_username"]
+            correct_pwd = st.secrets["admin_password"]
         else:
-            st.session_state["password_correct"] = False
+            st.error("⚠️ 系统未配置密码，请联系管理员在 Secrets 中设置！")
+            return
 
-    if "password_correct" not in st.session_state:
-        # 第一次打开，显示输入框
-        st.text_input("🔒 请输入公司访问密码", type="password", on_change=password_entered, key="password")
+        if user == correct_user and pwd == correct_pwd:
+            st.session_state["login_success"] = True
+        else:
+            st.session_state["login_success"] = False
+            st.error("❌ 用户名或密码错误")
+
+    # 如果未登录，显示登录界面
+    if not st.session_state["login_success"]:
+        st.markdown("## 🔒 请登录系统")
+        st.markdown("---")
+        # 创建两列布局，让输入框好看一点
+        c1, c2 = st.columns([1, 2])
+        with c1:
+            st.image("https://img.icons8.com/color/96/microsoft-excel-2019--v1.png", width=80)
+        with c2:
+            st.text_input("👤 用户名", key="input_user")
+            st.text_input("🔑 密码", type="password", key="input_password")
+            st.button("登录", on_click=verify_login, type="primary")
         return False
-    elif not st.session_state["password_correct"]:
-        # 密码错了，提示错误
-        st.text_input("🔒 请输入公司访问密码", type="password", on_change=password_entered, key="password")
-        st.error("❌ 密码错误，请重试")
-        return False
-    else:
-        # 密码正确
-        return True
+    
+    return True
 
-if not check_password():
-    st.stop()  # ⛔️ 密码不对，立刻停止运行下面的代码
-# --- 🔐 密码保护功能结束 ---
+# 执行登录检查，如果没过就停止运行下面代码
+if not check_login():
+    st.stop()
+# --- 🔐 登录保护功能 (结束) ---
 
-# 下面是您原来的所有功能代码，不用动 #
+
+# --- 📦 主程序功能 (开始) ---
+
 st.title("🧾 Peppermayo 自动发票生成器")
 st.markdown("### 上传 Manifest -> 自动归类 + 智能 HS Code -> 下载发票")
 st.info("💡 提示：您的文件是在云端内存中处理的，处理完即刻销毁，不会保存任何数据，请放心使用。")
 st.markdown("---")
 
-# ... (此处省略您原来的 process_data 函数和逻辑，保持原样即可) ...
-# 请把您原来 app.py 剩下的代码完整的接在这里
-# 包括 uploaded_file = st.file_uploader(...) 及其后面的所有内容
-
+# 上传区域
 uploaded_file = st.file_uploader("📂 请把 Manifest (Excel/CSV) 拖到这里", type=['xlsx', 'csv'])
 
 def process_data(file):
-    # ... (保持原来的函数内容不变) ...
-    # 为了节省篇幅，这里不重复显示，请确保您原来的逻辑都在
+    # 读取文件
     try:
         if file.name.lower().endswith('.csv'):
             try:
@@ -63,6 +77,7 @@ def process_data(file):
         st.error(f"读取失败: {e}")
         return None
 
+    # 寻找列名
     def get_col(df, candidates):
         for col in candidates:
             if col in df.columns: return df[col]
@@ -78,6 +93,7 @@ def process_data(file):
         st.error("❌ 错误：找不到‘产品描述’列，请检查表格表头！")
         return None
 
+    # 归类逻辑 (Tops 优先)
     def categorize(x):
         s = str(x).lower()
         if 'dress' in s or 'gown' in s: return 'Dresses'
@@ -94,11 +110,13 @@ def process_data(file):
     df['Amt'] = pd.to_numeric(amt_col, errors='coerce').fillna(0)
     df['Origin'] = origin_col.fillna('CN') if origin_col is not None else 'CN'
     
+    # 修复 HS Code (转字符串 + 去除 .0)
     if hs_col is not None:
         df['HS_Code'] = hs_col.astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '')
     else:
         df['HS_Code'] = ''
 
+    # 智能 HS Code 选择 (优先找 0000 结尾)
     def select_best_hscode(series):
         valid_codes = [c for c in series if c and str(c).strip() != '']
         if not valid_codes: return ''
@@ -106,6 +124,7 @@ def process_data(file):
         if zeros_codes: return pd.Series(zeros_codes).mode()[0]
         return pd.Series(valid_codes).mode()[0]
 
+    # 汇总
     summary = df.groupby('Category').agg({
         'HS_Code': select_best_hscode,
         'Qty': 'sum',
@@ -115,6 +134,7 @@ def process_data(file):
 
     summary.columns = ['Goods of Description', 'HS CODE', 'Unit', 'Amount', 'Country of origin']
 
+    # 添加合计行 (TOTAL)
     total_unit = summary['Unit'].sum()
     total_amount = summary['Amount'].sum()
     total_row = pd.DataFrame([{
@@ -128,6 +148,7 @@ def process_data(file):
     
     return summary
 
+# 主界面逻辑
 if uploaded_file is not None:
     st.write("🔄 正在处理...")
     result_df = process_data(uploaded_file)
@@ -141,8 +162,9 @@ if uploaded_file is not None:
             result_df.to_excel(writer, index=False, sheet_name='Invoice')
             
         st.download_button(
-            label="⬇️ 点击下载 Excel 文件",
+            label="⬇️ 点击下载处理好的 Excel",
             data=buffer.getvalue(),
             file_name=f"[DONE]_{uploaded_file.name.split('.')[0]}.xlsx",
-            mime="application/vnd.ms-excel"
+            mime="application/vnd.ms-excel",
+            type="primary"
         )
