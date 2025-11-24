@@ -56,7 +56,7 @@ if not check_login():
 # --- 📦 主程序功能 (开始) ---
 
 st.title("🧾 Peppermayo 数据归类")
-st.markdown("### 上传 Manifest -> 自动归类 -> 下载发票")
+st.markdown("### 上传 Manifest -> 自动归类 -> 下载/预览文件")
 st.info("💡 提示：您的文件是在云端内存中处理的，处理完即刻销毁，不会保存任何数据，请放心使用，导出后的文件如何同样HS CODE被分别用在了两个产品大类的情况下，需手动搜索件数少的品类后手动更换HS CODE 切记！不同产品不要使用同一个海关代码！")
 st.markdown("---")
 
