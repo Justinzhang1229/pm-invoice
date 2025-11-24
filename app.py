@@ -3,10 +3,10 @@ import pandas as pd
 import io
 
 # 设置网页配置
-st.set_page_config(page_title="Peppermayo 自动发票助手", page_icon="🧾")
+st.set_page_config(page_title="Peppermayo专用数据归类系统（测试阶段）", page_icon="🧾")
 
-st.title("🧾 Peppermayo 自动发票生成器")
-st.markdown("### 上传 Manifest -> 自动归类 + 智能 HS Code -> 下载发票")
+st.title("🧾 Peppermayo 自动数据归类")
+st.markdown("### 上传 Manifest -> 自动归类 + 智能 HS Code -> 下载数据文件")
 st.info("💡 提示：您的文件是在云端内存中处理的，处理完即刻销毁，不会保存任何数据，请放心使用。")
 st.markdown("---")
 
