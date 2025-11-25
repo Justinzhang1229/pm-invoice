@@ -123,14 +123,23 @@ html, body, [class*="css"] {
     color: rgba(255,255,255,0.70) !important;
 }
 
-/* ===== 优化 Info / Success 提示条，更精致 ===== */
-div[data-testid="stNotification"] {
-    border-radius: 10px !important;
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.35) !important;
-    font-size: 14px !important;
+/* ===== 表格居中显示 ===== */
+[data-testid="stDataFrame"] table td,
+[data-testid="stDataFrame"] table th {
+    text-align: center !important;
 }
+
+/* 表头背景更统一些 */
+[data-testid="stDataFrame"] thead tr th {
+    background-color: #111827 !important;
+    border-bottom: 1px solid #374151 !important;
+}
+
+/* TOTAL 行加粗 */
+[data-testid="stDataFrame"] tbody tr:last-child td {
+    font-weight: 600 !important;
+}
+
 
 /* 提示条文字 —— 更紧凑，与整体风格更一致 */
 div[data-testid="stNotification"] p {
