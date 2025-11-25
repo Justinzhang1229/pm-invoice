@@ -204,7 +204,7 @@ st.markdown("""
   <div class="pm-hero-icon">📦</div>
   <div>
     <div class="pm-hero-title">Peppermayo Manifest 归类工具</div>
-    <div class="pm-hero-subtitle">上传 Manifest → 自动归类 → 导出 Invoice 模板（含合计行）</div>
+    <div class="pm-hero-subtitle">上传 Manifest → 自动归类 → 导出模板（含合计行）</div>
     <div class="pm-hero-steps">
       <span class="pm-step pm-step-active">① 上传 Manifest 文件</span>
       <span class="pm-step-arrow">→</span>
@@ -219,13 +219,13 @@ st.markdown("""
 # ========== HS CODE 说明（文案不变） ==========
 st.markdown("""
 <div class="pm-info-card">
-💡 <b>重要提醒：HS CODE（海关编码）可能存在不准确的情况</b><br><br>
+💡 <b>重要提醒：HS CODE 源文件数据可能存在不准确的情况</b><br><br>
 由于源文件内的海关编码并非总是精确，请特别注意：<br><br>
 如果在导出的文件中发现 <b>同一个 HS CODE 被用于不同的产品大类</b>，请务必进行如下人工检查：<br><br>
 1. <b>优先检查件数较少的品类；</b><br>
 2. <b>将其 HS CODE 替换为正确且独立的编码；</b><br><br>
 ⚠️ <b>请务必遵守：不同产品大类不能使用同一个 HS CODE！</b><br>
-如发现编码重叠，请及时核查与调整，以避免造成清关或申报问题。
+如发现编码重复，请及时核查与调整，以避免造成清关或申报问题。
 </div>
 """, unsafe_allow_html=True)
 
@@ -234,13 +234,13 @@ st.markdown("""
 <div class="pm-card">
   <div class="pm-section-title">📤 上传 Manifest 文件</div>
   <p style="font-size:13px;margin-top:2px;margin-bottom:6px;">
-    支持 Excel (.xlsx) / CSV，系统会自动识别表头并生成分类汇总 Invoice 数据。
+    支持 Excel (.xlsx) / CSV，系统会自动识别并生成分类汇总数据。
   </p>
 </div>
 """, unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader(
-    "📂 请把 Manifest (Excel/CSV) 拖到这里或点击Browse files上传",
+    "📂 请把 Manifest (Excel/CSV) 拖到这里或点击Browse files上传文件",
     type=['xlsx', 'csv']
 )
 
@@ -397,7 +397,7 @@ def process_data(file):
 
 # ========== 主逻辑：上传后处理 ==========
 if uploaded_file is not None:
-    st.write("🔄 正在处理 Manifest 文件，请稍等几秒…")
+    st.write("🔄 正在处理 Manifest 文件，瞬间完成！✌️")
     result_df = process_data(uploaded_file)
 
     if result_df is not None:
@@ -420,7 +420,7 @@ if uploaded_file is not None:
                 <span style='font-size:13px;color:#cccccc;'>
                     共 <b>{len(result_df) - 1}</b> 个分类，
                     总数量 <b>{int(total_unit)}</b> 件，
-                    总金额约 <b>{total_amount:,.2f}</b>
+                    总金额 <b>{total_amount:,.2f}</b>
                 </span>
             </div>
             """,
@@ -446,7 +446,7 @@ if uploaded_file is not None:
 st.markdown(
     """
     <p style="font-size:11px;color:#555;margin-top:30px;text-align:center;opacity:0.6;">
-    本工具仅供 Wiseway 内部使用，请勿对外分享链接。
+    战友们！不许对外分享！。
     </p>
     """,
     unsafe_allow_html=True
