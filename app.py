@@ -85,29 +85,32 @@ def process_data(file):
         if file.name.lower().endswith('.csv'):
             try:
                 df = pd.read_csv(file, encoding='utf-8')
-            except:
+            except Exception:
                 df = pd.read_csv(file, encoding='ISO-8859-1')
         else:
             df = pd.read_excel(file)
     except Exception as e:
         st.error(f"读取失败: {e}")
-        return None
+        return None, []
+
+    diagnostics = []
 
     # 寻找列名
     def get_col(df, candidates):
         for col in candidates:
-            if col in df.columns: return df[col]
-        return None
+            if col in df.columns:
+                return df[col], col
+        return None, None
 
-    desc_col = get_col(df, ['Item Description', 'Goods Description', 'Description', 'Goods of Description'])
-    qty_col = get_col(df, ['Unit', 'Item Quantity', 'Qty', 'Pieces'])
-    amt_col = get_col(df, ['Amount', 'Item Value', 'Total Value'])
-    hs_col = get_col(df, ['HS CODE', 'Item HS Code'])
-    origin_col = get_col(df, ['Country Of Origin', 'Country of origin', 'Origin'])
+    desc_col, desc_name = get_col(df, ['Item Description', 'Goods Description', 'Description', 'Goods of Description'])
+    qty_col, qty_name = get_col(df, ['Unit', 'Item Quantity', 'Qty', 'Pieces'])
+    amt_col, amt_name = get_col(df, ['Amount', 'Item Value', 'Total Value'])
+    hs_col, hs_name = get_col(df, ['HS CODE', 'Item HS Code'])
+    origin_col, origin_name = get_col(df, ['Country Of Origin', 'Country of origin', 'Origin'])
 
     if desc_col is None:
         st.error("❌ 错误：找不到‘产品描述’列，请检查表格表头！")
-        return None
+        return None, diagnostics
 
     # 归类逻辑 (Tops 优先)
     def categorize(x):
@@ -122,14 +125,48 @@ def process_data(file):
         return 'Accessories'
 
     df['Category'] = desc_col.apply(categorize)
-    df['Qty'] = pd.to_numeric(qty_col, errors='coerce').fillna(0)
-    df['Amt'] = pd.to_numeric(amt_col, errors='coerce').fillna(0)
-    df['Origin'] = origin_col.fillna('CN') if origin_col is not None else 'CN'
+
+    if qty_col is None:
+        st.error("❌ 未找到数量列，请补充准确件数后重新上传（清关申报不可为 0）。")
+        return None, diagnostics
+    else:
+        qty_numeric = pd.to_numeric(qty_col, errors='coerce')
+        invalid_qty_mask = qty_numeric.isna()
+        invalid_qty = int(invalid_qty_mask.sum())
+        if invalid_qty:
+            error_rows = ', '.join(map(str, (df.index[invalid_qty_mask] + 2).tolist()))
+            st.error(
+                f"❌ 发现 {invalid_qty} 行数量缺失或无法转换为数字（行号：{error_rows}），"
+                "请修正原文件后重新上传（清关申报不可为 0）。"
+            )
+            return None, diagnostics
+        df['Qty'] = qty_numeric
+
+    if amt_col is None:
+        st.error("❌ 未找到金额列，请补充准确金额后重新上传（清关申报不可为 0）。")
+        return None, diagnostics
+    else:
+        amt_numeric = pd.to_numeric(amt_col, errors='coerce')
+        invalid_amt_mask = amt_numeric.isna()
+        invalid_amt = int(invalid_amt_mask.sum())
+        if invalid_amt:
+            error_rows = ', '.join(map(str, (df.index[invalid_amt_mask] + 2).tolist()))
+            st.error(
+                f"❌ 发现 {invalid_amt} 行金额缺失或无法转换为数字（行号：{error_rows}），"
+                "请修正原文件后重新上传（清关申报不可为 0）。"
+            )
+            return None, diagnostics
+        df['Amt'] = amt_numeric
+
+    # 产地一律设为 CN（覆盖原始数据），提醒用户确认
+    df['Origin'] = 'CN'
+    diagnostics.append("所有产地已统一设为 CN，请确认后如有需要在原文件中修改后再上传。")
     
     # 修复 HS Code (转字符串 + 去除 .0)
     if hs_col is not None:
         df['HS_Code'] = hs_col.astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '')
     else:
+        diagnostics.append("未找到 HS CODE 列，已默认留空，建议补充或检查清关要求。")
         df['HS_Code'] = ''
 
     # 智能 HS Code 选择 (优先找 0000 结尾)
@@ -161,18 +198,34 @@ def process_data(file):
         'Country of origin': ''
     }])
     summary = pd.concat([summary, total_row], ignore_index=True)
-    
-    return summary
+
+    # 数据质量提示
+    empty_desc = int(df[desc_name].isna().sum()) if desc_name else 0
+    if empty_desc:
+        diagnostics.append(f"有 {empty_desc} 行产品描述为空，可能导致分类不准确。")
+
+    accessories_count = int((df['Category'] == 'Accessories').sum())
+    if accessories_count:
+        diagnostics.append(
+            f"有 {accessories_count} 行被归为 Accessories（兜底分类），建议检查描述以提升分类精度。"
+        )
+
+    return summary, diagnostics
 
 # 主界面逻辑
 if uploaded_file is not None:
     st.write("🔄 正在处理...")
-    result_df = process_data(uploaded_file)
-    
+    result_df, diagnostics = process_data(uploaded_file)
+
     if result_df is not None:
         st.success("✅ 处理完成！拿走！不谢！")
         st.dataframe(result_df, use_container_width=True)
-        
+
+        if diagnostics:
+            st.subheader("🔍 数据质量检查")
+            for tip in diagnostics:
+                st.info(f"• {tip}")
+
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
             result_df.to_excel(writer, index=False, sheet_name='Invoice')
