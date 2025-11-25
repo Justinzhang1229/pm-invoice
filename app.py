@@ -139,8 +139,10 @@ def process_data(file):
     if origin_col is not None:
         matched_cols.append(f"原产地列：`{origin_col.name}`")
 
-    if matched_cols:
-        st.info("✅ 已识别的字段映射：\n\n- " + "\n- ".join(matched_cols))
+    # ⭐ 已识别字段映射（内部调试用，不对客户显示）
+    # if matched_cols:
+    #     st.info("✅ 已识别的字段映射：\n\n- " + "\n- ".join(matched_cols))
+
 
     # 数量 / 金额列本身缺失（整个列都没有）
     missing_cols_msg = []
