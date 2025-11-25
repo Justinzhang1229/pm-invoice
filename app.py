@@ -173,7 +173,7 @@ def process_data(file):
     # 原来的逻辑：转数字，非法的当成 NaN 再填 0 —— 这里保持不变
     df['Qty'] = pd.to_numeric(qty_col, errors='coerce').fillna(0)
     df['Amt'] = pd.to_numeric(amt_col, errors='coerce').fillna(0)
-    df['Origin'] = origin_col.fillna('CN') if origin_col is not None else 'CN'
+    df['Origin'] = 'CN'
     
     # HS CODE 这块你说先不动，也不改
     if hs_col is not None:
