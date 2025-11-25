@@ -9,10 +9,10 @@ st.set_page_config(
     layout="wide",
 )
 
-# ========== 全局样式（UI 美化 + 居中自适应） ==========
+# ========== 升级版 UI 样式（CSS） ==========
 st.markdown("""
 <style>
-/* 居中 + 最大宽度，适配 1080p / 2K / 4K */
+/* ===== 布局：居中 + 最大宽度，适配 1080p / 2K / 4K ===== */
 .block-container {
     max-width: 1320px !important;
     margin-left: auto !important;
@@ -21,28 +21,28 @@ st.markdown("""
     padding-bottom: 2rem !important;
 }
 
-/* 背景渐变，深色主题 */
+/* 深色渐变背景 */
 body {
     background: radial-gradient(circle at top left, #20232a 0, #111 45%, #050505 100%);
 }
 
-/* 全局字体稍微大一点，适配高分屏 */
+/* 全局字体微调，适配高分屏 */
 html, body, [class*="css"] {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
     font-size: 15px;
 }
 
-/* 顶部 Hero 区域 */
+/* ===== 顶部 Hero 区 ===== */
 .pm-hero {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 16px 20px;
+    padding: 20px 26px;             /* 上下加厚，整体更大气 */
     border-radius: 16px;
     background: linear-gradient(135deg, #20232a 0, #15171c 100%);
     border: 1px solid rgba(255,255,255,0.06);
     box-shadow: 0 18px 45px rgba(0,0,0,0.55);
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 .pm-hero-icon {
     font-size: 32px;
@@ -60,7 +60,7 @@ html, body, [class*="css"] {
 }
 .pm-hero-subtitle {
     font-size: 13px;
-    color: #b3b3b3;
+    color: #b9bcc5;
     margin-top: 3px;
 }
 .pm-hero-steps {
@@ -86,7 +86,7 @@ html, body, [class*="css"] {
     opacity: 0.55;
 }
 
-/* 顶部说明卡片（内容不变，仅样式美化） */
+/* ===== 顶部说明卡片（内容不变，只美化） ===== */
 .pm-info-card {
     background: #1c273a;
     padding: 20px 22px;
@@ -95,21 +95,22 @@ html, body, [class*="css"] {
     font-size: 14px;
     line-height: 1.65;
     color: #e6eefc;
-    box-shadow: 0px 6px 18px rgba(0,0,0,0.35);
-    margin-bottom: 22px;
+    box-shadow: 0px 10px 28px rgba(0,0,0,0.25);  /* 阴影统一 */
+    margin-top: 12px;                             /* 与 Hero 拉开一点距离 */
+    margin-bottom: 24px;
 }
 .pm-info-card b {
     color: #ffffff;
 }
 
-/* 通用卡片（上传区等） */
+/* ===== 通用内容卡片（上传区等） ===== */
 .pm-card {
     border-radius: 14px;
     padding: 14px 18px;
     background: #16181d;
     border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    margin-bottom: 18px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.25);     /* 与 info 卡片统一 */
+    margin-bottom: 24px;
 }
 .pm-section-title {
     font-size: 15px;
@@ -117,7 +118,12 @@ html, body, [class*="css"] {
     margin-bottom: 6px;
 }
 
-/* 上传控件美化 */
+/* 上传区说明文字：略亮一点，更柔和 */
+.pm-card p {
+    color: rgba(255,255,255,0.70) !important;
+}
+
+/* ===== 上传控件美化 ===== */
 div[data-testid="stFileUploader"] > div:first-child {
     border: 1.5px dashed #555;
     background-color: #111;
@@ -125,7 +131,7 @@ div[data-testid="stFileUploader"] > div:first-child {
     border-radius: 12px;
 }
 
-/* 下载按钮放大一点 */
+/* 下载按钮稍微放大一点，做成“主按钮”风格 */
 .stDownloadButton button {
     padding: 10px 24px !important;
     font-size: 15px !important;
@@ -133,11 +139,18 @@ div[data-testid="stFileUploader"] > div:first-child {
     font-weight: 600 !important;
 }
 
-/* DataFrame 圆角 */
+/* DataFrame 圆角，跟卡片统一 */
 .dataframe {
     border-radius: 12px !important;
     overflow: hidden !important;
 }
+
+/* ===== （可选）隐藏 Streamlit 默认菜单/页脚，让页面更像完整系统 ===== */
+/*
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+*/
 </style>
 """, unsafe_allow_html=True)
 
@@ -203,7 +216,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ========== HS CODE 说明（文案完全不变） ==========
+# ========== HS CODE 说明（文案不变） ==========
 st.markdown("""
 <div class="pm-info-card">
 💡 <b>重要提醒：HS CODE（海关编码）可能存在不准确的情况</b><br><br>
@@ -220,7 +233,7 @@ st.markdown("""
 st.markdown("""
 <div class="pm-card">
   <div class="pm-section-title">📤 上传 Manifest 文件</div>
-  <p style="font-size:13px;color:#aaaaaa;margin-top:2px;margin-bottom:6px;">
+  <p style="font-size:13px;margin-top:2px;margin-bottom:6px;">
     支持 Excel (.xlsx) / CSV，系统会自动识别表头并生成分类汇总 Invoice 数据。
   </p>
 </div>
