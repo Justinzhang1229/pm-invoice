@@ -32,17 +32,23 @@ html, body, [class*="css"] {
     font-size: 15px;
 }
 
+/* ========== 统一卡片风格：圆角 / 阴影 / 间距 ========== */
+.pm-hero,
+.pm-info-card,
+.pm-card {
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+    margin-bottom: 24px;
+}
+
 /* ===== 顶部 Hero 区 ===== */
 .pm-hero {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 20px 26px;             /* 上下加厚，整体更大气 */
-    border-radius: 16px;
+    padding: 20px 26px;
     background: linear-gradient(135deg, #20232a 0, #15171c 100%);
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 18px 45px rgba(0,0,0,0.55);
-    margin-bottom: 20px;
 }
 .pm-hero-icon {
     font-size: 32px;
@@ -86,53 +92,96 @@ html, body, [class*="css"] {
     opacity: 0.55;
 }
 
-/* ===== 顶部说明卡片（内容不变，只美化） ===== */
+/* ===== 顶部说明卡片（文案不变） ===== */
 .pm-info-card {
     background: #1c273a;
     padding: 20px 22px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.10);
     font-size: 14px;
     line-height: 1.65;
     color: #e6eefc;
-    box-shadow: 0px 10px 28px rgba(0,0,0,0.25);  /* 阴影统一 */
-    margin-top: 12px;                             /* 与 Hero 拉开一点距离 */
-    margin-bottom: 24px;
 }
 .pm-info-card b {
     color: #ffffff;
 }
 
-/* ===== 通用内容卡片（上传区等） ===== */
+/* ===== 通用内容卡片（上传区域等） ===== */
 .pm-card {
-    border-radius: 14px;
     padding: 14px 18px;
     background: #16181d;
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 10px 28px rgba(0,0,0,0.25);     /* 与 info 卡片统一 */
-    margin-bottom: 24px;
 }
 .pm-section-title {
     font-size: 15px;
     font-weight: 600;
     margin-bottom: 6px;
 }
-
-/* 上传区说明文字：略亮一点，更柔和 */
 .pm-card p {
     color: rgba(255,255,255,0.70) !important;
+    font-size: 13px;
 }
 
-/* ===== 表格居中显示 ===== */
+/* ===== 上传控件美化 ===== */
+div[data-testid="stFileUploader"] > div:first-child {
+    border: 1.5px dashed #555;
+    background-color: #111;
+    padding: 22px;
+    border-radius: 12px;
+}
+
+/* ===== 下载按钮：蓝色主按钮风格 ===== */
+.stDownloadButton button {
+    padding: 10px 24px !important;
+    font-size: 15px !important;
+    border-radius: 999px !important;
+    font-weight: 600 !important;
+    background: #2563eb !important;       /* 主蓝 */
+    border: 1px solid #1d4ed8 !important;  /* 深一点的蓝 */
+    color: #ffffff !important;
+}
+.stDownloadButton button:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
+/* ===== 提示条（st.info / st.success）精致化 ===== */
+div[data-testid="stNotification"] {
+    border-radius: 10px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35) !important;
+    font-size: 14px !important;
+}
+div[data-testid="stNotification"] p {
+    margin-bottom: 0 !important;
+}
+
+/* ===== DataFrame 统一视觉 + 居中 + hover 高亮 ===== */
+[data-testid="stDataFrame"] .row_heading,
+[data-testid="stDataFrame"] .blank {
+    display: none;  /* 可选：隐藏左侧行号，如果你想保留行号就把这行删掉 */
+}
+
+[data-testid="stDataFrame"] table {
+    border-radius: 12px;
+    overflow: hidden;
+    border-collapse: collapse !important;
+}
+
 [data-testid="stDataFrame"] table td,
 [data-testid="stDataFrame"] table th {
-    text-align: center !important;
+    text-align: center !important;          /* 所有列居中 */
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
 
-/* 表头背景更统一些 */
+/* 表头背景统一 */
 [data-testid="stDataFrame"] thead tr th {
     background-color: #111827 !important;
     border-bottom: 1px solid #374151 !important;
+}
+
+/* 行 hover 高亮：非常专业的效果 */
+[data-testid="stDataFrame"] tbody tr:hover {
+    background-color: #111827 !important;
 }
 
 /* TOTAL 行加粗 */
@@ -140,39 +189,7 @@ html, body, [class*="css"] {
     font-weight: 600 !important;
 }
 
-
-/* 提示条文字 —— 更紧凑，与整体风格更一致 */
-div[data-testid="stNotification"] p {
-    margin-bottom: 0 !important;
-}
-
-
-/* 下载按钮：蓝色主按钮风格 */
-.stDownloadButton button {
-    padding: 10px 24px !important;
-    font-size: 15px !important;
-    border-radius: 999px !important;
-    font-weight: 600 !important;
-    background: #2563eb !important;      /* 按钮背景：蓝色 */
-    border: 1px solid #1d4ed8 !important; /* 边框：稍深一点的蓝 */
-    color: #ffffff !important;            /* 文字：白色 */
-}
-
-/* 悬停效果：再深一点的蓝色 */
-.stDownloadButton button:hover {
-    background: #1d4ed8 !important;
-    border-color: #1d4ed8 !important;
-}
-
-}
-
-/* DataFrame 圆角，跟卡片统一 */
-.dataframe {
-    border-radius: 12px !important;
-    overflow: hidden !important;
-}
-
-/* ===== （可选）隐藏 Streamlit 默认菜单/页脚，让页面更像完整系统 ===== */
+/* =====（可选）隐藏 Streamlit 默认菜单/页脚，让界面更像独立系统 ===== */
 /*
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
@@ -180,6 +197,7 @@ header {visibility: hidden;}
 */
 </style>
 """, unsafe_allow_html=True)
+
 
 # ========== 登录保护 ==========
 def check_login():
