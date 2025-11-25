@@ -123,13 +123,20 @@ html, body, [class*="css"] {
     color: rgba(255,255,255,0.70) !important;
 }
 
-/* ===== 上传控件美化 ===== */
-div[data-testid="stFileUploader"] > div:first-child {
-    border: 1.5px dashed #555;
-    background-color: #111;
-    padding: 22px;
-    border-radius: 12px;
+/* ===== 优化 Info / Success 提示条，更精致 ===== */
+div[data-testid="stNotification"] {
+    border-radius: 10px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35) !important;
+    font-size: 14px !important;
 }
+
+/* 提示条文字 —— 更紧凑，与整体风格更一致 */
+div[data-testid="stNotification"] p {
+    margin-bottom: 0 !important;
+}
+
 
 /* 下载按钮：蓝色主按钮风格 */
 .stDownloadButton button {
