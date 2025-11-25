@@ -131,12 +131,23 @@ div[data-testid="stFileUploader"] > div:first-child {
     border-radius: 12px;
 }
 
-/* 下载按钮稍微放大一点，做成“主按钮”风格 */
+/* 下载按钮：蓝色主按钮风格 */
 .stDownloadButton button {
     padding: 10px 24px !important;
     font-size: 15px !important;
     border-radius: 999px !important;
     font-weight: 600 !important;
+    background: #2563eb !important;      /* 按钮背景：蓝色 */
+    border: 1px solid #1d4ed8 !important; /* 边框：稍深一点的蓝 */
+    color: #ffffff !important;            /* 文字：白色 */
+}
+
+/* 悬停效果：再深一点的蓝色 */
+.stDownloadButton button:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
 }
 
 /* DataFrame 圆角，跟卡片统一 */
