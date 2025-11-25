@@ -106,12 +106,13 @@ def process_data(file):
             except:
                 df = pd.read_csv(file, encoding='ISO-8859-1')
         else:
-            df = pd.read_excel(file)
+            # 显式指定 engine 会更稳一点
+            df = pd.read_excel(file, engine='openpyxl')
     except Exception as e:
         st.error(f"读取失败: {e}")
         return None
 
-    # ⭐ 去掉列名两侧空格，配合上面的 get_col 一起更稳
+    # 去掉列名两侧空格，配合上面的 get_col 一起更稳
     df.columns = df.columns.str.strip()
 
     # 寻找列名
@@ -125,7 +126,23 @@ def process_data(file):
         st.error("❌ 错误：找不到‘产品描述’列，请检查表格表头！(例如：Item Description / Goods Description / Description / Goods of Description)")
         return None
 
-    # ⭐ 新增：数量 / 金额列本身缺失（整个列都没有）
+    # ⭐ 显示匹配到的列名，方便排查
+    matched_cols = []
+    if desc_col is not None:
+        matched_cols.append(f"产品描述列：`{desc_col.name}`")
+    if qty_col is not None:
+        matched_cols.append(f"数量列：`{qty_col.name}`")
+    if amt_col is not None:
+        matched_cols.append(f"金额列：`{amt_col.name}`")
+    if hs_col is not None:
+        matched_cols.append(f"HS CODE 列：`{hs_col.name}`")
+    if origin_col is not None:
+        matched_cols.append(f"原产地列：`{origin_col.name}`")
+
+    if matched_cols:
+        st.info("✅ 已识别的字段映射：\n\n- " + "\n- ".join(matched_cols))
+
+    # 数量 / 金额列本身缺失（整个列都没有）
     missing_cols_msg = []
     if qty_col is None:
         missing_cols_msg.append("数量列（Unit / Item Quantity / Qty / Pieces）")
@@ -136,25 +153,59 @@ def process_data(file):
         st.error("❌ 错误：找不到以下必填列，请检查源文件表头后重新上传：\n- " + "\n- ".join(missing_cols_msg))
         return None
 
-    # ⭐ 新增：检查每一行是否有数量/金额为空的情况
-    # 这里用原始数据检查“空值”，再让用户修改源文件
-    missing_mask = qty_col.isna() | amt_col.isna()
-    if missing_mask.any():
-        # Excel 一般是第 1 行是表头，所以行号 +2 更符合用户看到的行号
-        excel_rows = (df.index[missing_mask] + 2).tolist()
+    # ==== 升级版：空值检测 + 非数字检测 ====
 
-        # 为了防止行号太多，把前 20 行列出来，其余给个统计数字
+    # 先拿到原始字符串（去掉前后空格）
+    qty_str = qty_col.astype(str).str.strip()
+    amt_str = amt_col.astype(str).str.strip()
+
+    # ① 缺失检测：NaN 或者 空字符串 / 只剩空格，都当成缺失
+    missing_mask = (
+        qty_col.isna() |
+        amt_col.isna() |
+        qty_str.eq('') |
+        amt_str.eq('')
+    )
+
+    if missing_mask.any():
+        excel_rows = (df.index[missing_mask] + 2).tolist()  # Excel 行号
         if len(excel_rows) > 20:
             display_rows = excel_rows[:20]
-            row_str = ", ".join(map(str, display_rows)) + f" ……（共 {len(excel_rows)} 行有问题）"
+            row_str = ", ".join(map(str, display_rows)) + f" ……（共 {len(excel_rows)} 行有数量/金额为空）"
         else:
             row_str = ", ".join(map(str, excel_rows))
 
         st.error(
-            "❌ 错误：检测到有行的【数量】或【金额】为空，请先修改源文件后再重新上传。\n\n"
+            "❌ 错误：检测到有行的【数量】或【金额】为空（包括空单元格或只有空格），"
+            "请先在源文件中补全后再重新上传。\n\n"
             f"示例问题行（Excel 行号）：{row_str}"
         )
         return None
+
+    # ② 非数字检测：看起来有值，但转成数字是 NaN 的，认为是非法字符
+    qty_numeric = pd.to_numeric(qty_col, errors='coerce')
+    amt_numeric = pd.to_numeric(amt_col, errors='coerce')
+
+    invalid_qty_mask = qty_str.ne('') & qty_str.notna() & qty_numeric.isna()
+    invalid_amt_mask = amt_str.ne('') & amt_str.notna() & amt_numeric.isna()
+    invalid_mask = invalid_qty_mask | invalid_amt_mask
+
+    if invalid_mask.any():
+        excel_rows = (df.index[invalid_mask] + 2).tolist()
+        if len(excel_rows) > 20:
+            display_rows = excel_rows[:20]
+            row_str = ", ".join(map(str, display_rows)) + f" ……（共 {len(excel_rows)} 行存在非数字的数量/金额）"
+        else:
+            row_str = ", ".join(map(str, excel_rows))
+
+        st.error(
+            "❌ 错误：检测到有行的【数量】或【金额】为非数字（例如：字母、符号、N/A 等），"
+            "请先在源文件中改为数字后再重新上传。\n\n"
+            f"示例问题行（Excel 行号）：{row_str}"
+        )
+        return None
+
+    # ==================== 后面逻辑保持不变 ====================
 
     # 归类逻辑 (Tops 优先) —— 按你原来的逻辑保持不动
     def categorize(x):
@@ -170,9 +221,10 @@ def process_data(file):
 
     df['Category'] = desc_col.apply(categorize)
 
-    # 原来的逻辑：转数字，非法的当成 NaN 再填 0 —— 这里保持不变
-    df['Qty'] = pd.to_numeric(qty_col, errors='coerce').fillna(0)
-    df['Amt'] = pd.to_numeric(amt_col, errors='coerce').fillna(0)
+    # 数量 / 金额：直接用刚才的 numeric 结果（非法的已经提前拦截）
+    df['Qty'] = qty_numeric.fillna(0)
+    df['Amt'] = amt_numeric.fillna(0)
+
     # 原产地（全部覆盖为 CN）
     df['Origin'] = 'CN'
     
