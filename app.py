@@ -473,7 +473,7 @@ if uploaded_file is not None:
 st.markdown(
     """
     <p style="font-size:11px;color:#777;margin-top:30px;text-align:center;opacity:0.8;">
-    战友们！不许对外分享！。
+    战友们！不许对外分享！😡
     </p>
     """,
     unsafe_allow_html=True
