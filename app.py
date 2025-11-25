@@ -55,7 +55,7 @@ if not check_login():
 
 # --- 📦 主程序功能 (开始) ---
 
-st.title("📦 Peppermayo Manifest 数据自动归类工具")
+st.title("📦 Peppermayo Manifest 归类工具")
 
 st.markdown("### 📤 步骤：上传 Manifest → 自动归类 → 下载/预览结果文件")
 st.markdown("---")
@@ -77,7 +77,7 @@ st.info("""
 st.markdown("---")
 
 # 上传区域
-uploaded_file = st.file_uploader("📂 请把 Manifest (Excel/CSV) 拖到这里", type=['xlsx', 'csv'])
+uploaded_file = st.file_uploader("📂 请把 Manifest (Excel/CSV) 拖到这里或点击Browse files上传", type=['xlsx', 'csv'])
 
 def process_data(file):
     # 读取文件
@@ -170,7 +170,7 @@ if uploaded_file is not None:
     result_df = process_data(uploaded_file)
     
     if result_df is not None:
-        st.success("✅ 处理完成！")
+        st.success("✅ 处理完成！拿走！不谢！")
         st.dataframe(result_df, use_container_width=True)
         
         buffer = io.BytesIO()
