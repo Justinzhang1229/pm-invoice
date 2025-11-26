@@ -2,6 +2,14 @@ import streamlit as st
 import pandas as pd
 import io
 
+# ====== 列名候选（集中维护，后面好改） ======
+DESC_COLS   = ['Item Description', 'Goods Description', 'Description', 'Goods of Description']
+QTY_COLS    = ['Unit', 'Item Quantity', 'Qty', 'Pieces']
+AMT_COLS    = ['Amount', 'Item Value', 'Total Value']
+HS_COLS     = ['HS CODE', 'Item HS Code']
+ORIGIN_COLS = ['Country Of Origin', 'Country of origin', 'Origin']
+
+
 # ========== 基本配置 ==========
 st.set_page_config(
     page_title="Peppermayo 数据归类",
@@ -171,9 +179,9 @@ div[data-testid="stNotification"] p {
 
 /* ===== DataFrame 容器整体变窄 + 居中 ===== */
 [data-testid="stDataFrame"] {
-    max-width: 1100px;          /* 控制表格整体宽度 */
+    max-width: 1100px;
     margin-left: auto;
-    margin-right: auto;         /* 自动左右居中 */
+    margin-right: auto;
 }
 
 /* ===== DataFrame 统一视觉 + 居中 + hover 高亮 ===== */
@@ -185,7 +193,7 @@ div[data-testid="stNotification"] p {
 
 [data-testid="stDataFrame"] table td,
 [data-testid="stDataFrame"] table th {
-    text-align: center !important;          /* 所有列居中 */
+    text-align: center !important;
     padding-top: 6px;
     padding-bottom: 6px;
 }
@@ -257,9 +265,8 @@ def check_login():
             st.session_state["login_success"] = False
             st.error("❌ 用户名或密码错误，请重试。")
 
-    # 未登录：显示居中登录表单（保留原文案）
+    # 未登录：显示居中登录表单
     if not st.session_state["login_success"]:
-        # 顶部标题说明
         st.markdown(
             """
             <div style="text-align:center;margin-top:80px;margin-bottom:24px;">
@@ -273,7 +280,6 @@ def check_login():
             unsafe_allow_html=True
         )
 
-        # 中间一列：用户名 + 密码 + 登录按钮
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
             st.text_input("👤 用户名", key="input_user")
@@ -354,13 +360,13 @@ def get_col(df, candidates):
 
 # ========== 核心处理函数 ==========
 def process_data(file):
-    # 读取文件
+    # 读取文件：对奇怪字符更宽容一点
     try:
         if file.name.lower().endswith('.csv'):
             try:
-                df = pd.read_csv(file, encoding='utf-8')
+                df = pd.read_csv(file, encoding='utf-8', errors='ignore')
             except Exception:
-                df = pd.read_csv(file, encoding='ISO-8859-1')
+                df = pd.read_csv(file, encoding='ISO-8859-1', errors='ignore')
         else:
             df = pd.read_excel(file, engine='openpyxl')
     except Exception as e:
@@ -371,11 +377,11 @@ def process_data(file):
     df.columns = df.columns.str.strip()
 
     # 找关键列
-    desc_col = get_col(df, ['Item Description', 'Goods Description', 'Description', 'Goods of Description'])
-    qty_col  = get_col(df, ['Unit', 'Item Quantity', 'Qty', 'Pieces'])
-    amt_col  = get_col(df, ['Amount', 'Item Value', 'Total Value'])
-    hs_col   = get_col(df, ['HS CODE', 'Item HS Code'])
-    origin_col = get_col(df, ['Country Of Origin', 'Country of origin', 'Origin'])
+    desc_col   = get_col(df, DESC_COLS)
+    qty_col    = get_col(df, QTY_COLS)
+    amt_col    = get_col(df, AMT_COLS)
+    hs_col     = get_col(df, HS_COLS)
+    origin_col = get_col(df, ORIGIN_COLS)
 
     if desc_col is None:
         st.error("❌ 错误：找不到‘产品描述’列，请检查表格表头！（例如：Item Description / Goods Description / Description / Goods of Description）")
@@ -415,9 +421,9 @@ def process_data(file):
         )
         return None
 
-    # ② 非数字检测
-    qty_numeric = pd.to_numeric(qty_col, errors='coerce')
-    amt_numeric = pd.to_numeric(amt_col, errors='coerce')
+    # ② 非数字检测 —— 基于 strip 之后的字符串做数值转换
+    qty_numeric = pd.to_numeric(qty_str, errors='coerce')
+    amt_numeric = pd.to_numeric(amt_str, errors='coerce')
 
     invalid_qty_mask = qty_str.ne("") & qty_str.notna() & qty_numeric.isna()
     invalid_amt_mask = amt_str.ne("") & amt_str.notna() & amt_numeric.isna()
@@ -451,11 +457,14 @@ def process_data(file):
     df['Category'] = desc_col.apply(categorize)
     df['Qty'] = qty_numeric.fillna(0)
     df['Amt'] = amt_numeric.fillna(0)
-    df['Origin'] = 'CN'  # 默认全部 CN
 
-    # HS CODE 处理
+    # 原产地：当前业务要求全部写 CN，如需以后放开可改为使用 origin_col
+    df['Origin'] = 'CN'
+
+    # HS CODE 处理（更安全，不误伤真正的 "nan" 文本）
     if hs_col is not None:
-        df['HS_Code'] = hs_col.astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', '')
+        clean_hs = hs_col.astype(str).str.replace(r'\.0$', '', regex=True)
+        df['HS_Code'] = clean_hs.where(~clean_hs.str.lower().eq("nan"), "")
     else:
         df['HS_Code'] = ''
 
@@ -489,7 +498,7 @@ def process_data(file):
     }])
     summary = pd.concat([summary, total_row], ignore_index=True)
 
-    # ===== 添加序号列：分类从 1 开始，TOTAL 不编号 =====
+    # 添加序号列：分类从 1 开始，TOTAL 不编号
     summary.insert(0, "No.", "")
     summary.loc[summary.index[:-1], "No."] = range(1, len(summary))
 
