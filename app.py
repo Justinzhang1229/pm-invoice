@@ -521,7 +521,16 @@ if uploaded_file is not None:
         )
 
         # 不显示 Pandas 默认 index
-        st.dataframe(result_df, use_container_width=True, hide_index=True)
+        st.markdown('<div class="pm-table-wrapper">', unsafe_allow_html=True)
+
+        st.dataframe(
+        result_df,
+        use_container_width=True,
+        hide_index=True
+        )
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
 
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
