@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# ========== 全局样式（统一阴影/圆角/间距 + 按钮 + 表格 hover） ==========
+# ========== 全局样式（统一阴影/圆角/间距 + 按钮 + 表格 hover + 隐藏菜单） ==========
 st.markdown("""
 <style>
 /* ===== 布局：居中 + 最大宽度，适配 1080p / 2K / 4K ===== */
@@ -171,9 +171,9 @@ div[data-testid="stNotification"] p {
 
 /* ===== DataFrame 容器整体变窄 + 居中 ===== */
 [data-testid="stDataFrame"] {
-    max-width: 1100px;          /* 控制表格整体宽度 */
+    max-width: 1100px;
     margin-left: auto;
-    margin-right: auto;         /* 自动左右居中 */
+    margin-right: auto;
 }
 
 /* ===== DataFrame 统一视觉 + 居中 + hover 高亮 ===== */
@@ -185,7 +185,7 @@ div[data-testid="stNotification"] p {
 
 [data-testid="stDataFrame"] table td,
 [data-testid="stDataFrame"] table th {
-    text-align: center !important;          /* 所有列居中 */
+    text-align: center !important;
     padding-top: 6px;
     padding-bottom: 6px;
 }
@@ -260,9 +260,8 @@ def check_login():
             st.session_state["login_success"] = False
             st.error("❌ 用户名或密码错误，请重试。")
 
-    # 未登录：显示居中登录表单（保留原文案）
+    # 未登录：显示居中登录表单（使用 form 支持回车提交）
     if not st.session_state["login_success"]:
-        # 顶部标题说明
         st.markdown(
             """
             <div style="text-align:center;margin-top:80px;margin-bottom:24px;">
@@ -276,12 +275,14 @@ def check_login():
             unsafe_allow_html=True
         )
 
-        # 中间一列：用户名 + 密码 + 登录按钮
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
-            st.text_input("👤 用户名", key="input_user")
-            st.text_input("🔑 密码", type="password", key="input_password")
-            st.button("登录", on_click=verify_login)
+            with st.form("login_form", clear_on_submit=False):
+                st.text_input("👤 用户名", key="input_user")
+                st.text_input("🔑 密码", type="password", key="input_password")
+                submitted = st.form_submit_button("登录")
+                if submitted:
+                    verify_login()
 
         return False
 
@@ -357,14 +358,17 @@ def get_col(df, candidates):
 
 # ========== 核心处理函数 ==========
 def process_data(file):
-    # 读取文件（CSV 兼容多种编码，避免 utf-8 报错）
+    # 读取文件（CSV 兼容多种编码，注意每次读取前 seek(0)）
     try:
         if file.name.lower().endswith('.csv'):
             try:
+                file.seek(0)
                 df = pd.read_csv(file, encoding='utf-8')
             except UnicodeDecodeError:
+                file.seek(0)
                 df = pd.read_csv(file, encoding='ISO-8859-1')
         else:
+            file.seek(0)
             df = pd.read_excel(file, engine='openpyxl')
     except Exception as e:
         st.error(f"读取失败: {e}")
