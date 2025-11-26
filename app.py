@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# ========== 全局样式（统一阴影/圆角/间距 + 登录页 + 表格 hover） ==========
+# ========== 全局样式（统一阴影/圆角/间距 + 按钮 + 表格 hover） ==========
 st.markdown("""
 <style>
 /* ===== 布局：居中 + 最大宽度，适配 1080p / 2K / 4K ===== */
@@ -127,7 +127,22 @@ div[data-testid="stFileUploader"] > div:first-child {
     border-radius: 12px;
 }
 
-/* ===== 下载按钮：蓝色主按钮风格 ===== */
+/* ===== 默认按钮：蓝色圆角（登录按钮等） ===== */
+.stButton > button {
+    border-radius: 999px !important;
+    background: #2563eb !important;
+    border: 1px solid #1d4ed8 !important;
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    padding: 8px 18px !important;
+    font-size: 14px !important;
+}
+.stButton > button:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
+/* ===== 下载按钮：蓝色主按钮风格（覆盖上面默认按钮） ===== */
 .stDownloadButton button {
     padding: 10px 24px !important;
     font-size: 15px !important;
@@ -184,72 +199,6 @@ div[data-testid="stNotification"] p {
     font-weight: 600 !important;
 }
 
-/* ===== 登录卡片：玻璃效果 + 淡入动画 ===== */
-.login-card {
-    width: 480px;
-    max-width: 94vw;
-    margin: 96px auto 40px auto;
-    padding: 28px 32px 24px 32px;
-    background: rgba(18,20,25,0.86);
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.10);
-    box-shadow: 0 24px 60px rgba(0,0,0,0.80);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-}
-
-.fade-in-up {
-    animation: fadeInUp 0.45s ease-out;
-}
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.login-title {
-    font-size: 20px;
-    font-weight: 650;
-    margin-bottom: 4px;
-}
-.login-subtitle {
-    font-size: 13px;
-    color: #a0a0a0;
-    margin-bottom: 22px;
-}
-.login-icon {
-    font-size: 32px;
-    margin-bottom: 10px;
-}
-
-/* 登录区域中的输入框/按钮全宽 */
-.login-card [data-testid="stTextInput"] > div > div {
-    width: 100% !important;
-}
-.login-card [data-testid="stTextInput"] {
-    margin-bottom: 10px;
-}
-.login-card .stButton button {
-    width: 100%;
-    padding: 9px 0 !important;
-    font-size: 15px !important;
-    border-radius: 999px !important;
-    background: #2563eb !important;
-    border: 1px solid #1d4ed8 !important;
-}
-.login-card .stButton button:hover {
-    background: #1d4ed8 !important;
-    border-color: #1d4ed8 !important;
-}
-
-/* 登录页在手机上更紧凑一点 */
-@media (max-width: 640px) {
-    .login-card {
-        margin-top: 48px;
-        padding: 22px 18px 20px 18px;
-    }
-}
-
 /* =====（可选）隐藏 Streamlit 默认菜单/页脚，让界面更像独立系统 ===== */
 /*
 #MainMenu {visibility: hidden;}
@@ -258,6 +207,7 @@ header {visibility: hidden;}
 */
 </style>
 """, unsafe_allow_html=True)
+
 
 # ========== 登录保护 ==========
 def check_login():
@@ -283,25 +233,28 @@ def check_login():
             st.session_state["login_success"] = False
             st.error("❌ 用户名或密码错误，请重试。")
 
-    # 未登录：显示登录卡片
+    # 未登录：显示居中登录表单（保留你原来的文案）
     if not st.session_state["login_success"]:
-        with st.container():
-            st.markdown(
-                """
-                <div class="login-card fade-in-up">
-                    <div class="login-icon">📊</div>
-                    <div class="login-title">请登录系统</div>
-                    <div class="login-subtitle">仅限内部同事使用，请输入用户名和密码继续。</div>
-                """,
-                unsafe_allow_html=True,
-            )
+        # 顶部标题说明
+        st.markdown(
+            """
+            <div style="text-align:center;margin-top:80px;margin-bottom:24px;">
+                <div style="font-size:32px;margin-bottom:6px;">📊</div>
+                <div style="font-size:20px;font-weight:650;">请登录系统</div>
+                <div style="font-size:13px;color:#a0a0a0;margin-top:4px;">
+                    仅限内部同事使用，请输入用户名和密码继续。
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
+        # 中间一列：用户名 + 密码 + 登录按钮
+        c1, c2, c3 = st.columns([1, 2, 1])
+        with c2:
             st.text_input("👤 用户名", key="input_user")
             st.text_input("🔑 密码", type="password", key="input_password")
-
             st.button("登录", on_click=verify_login)
-
-            st.markdown("</div>", unsafe_allow_html=True)
 
         return False
 
@@ -311,6 +264,7 @@ def check_login():
 # 执行登录检查，如果没过就停止运行下面代码
 if not check_login():
     st.stop()
+
 
 # ========== 主界面（已登录） ==========
 
@@ -332,7 +286,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# HS CODE 说明
+# HS CODE 说明（保留你写好的文字）
 st.markdown("""
 <div class="pm-info-card">
 💡 <b>重要提醒：HS CODE源文件数据可能存在不准确的情况</b><br><br>
@@ -345,7 +299,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 上传区域卡片
+# 上传区域卡片（保留文案）
 st.markdown("""
 <div class="pm-card">
   <div class="pm-section-title">📤 上传 Manifest 文件</div>
@@ -360,6 +314,7 @@ uploaded_file = st.file_uploader(
     type=['xlsx', 'csv']
 )
 
+
 # ========== 列匹配工具函数 ==========
 def get_col(df, candidates):
     """
@@ -371,6 +326,7 @@ def get_col(df, candidates):
         if key in norm_map:
             return df[norm_map[key]]
     return None
+
 
 # ========== 核心处理函数 ==========
 def process_data(file):
@@ -511,6 +467,7 @@ def process_data(file):
 
     return summary
 
+
 # ========== 主流程 ==========
 if uploaded_file is not None:
     st.write("🔄 正在处理 Manifest 文件，瞬间就会完成！✌️")
@@ -555,7 +512,7 @@ if uploaded_file is not None:
             type="primary"
         )
 
-# 底部说明
+# 底部说明（保留你的文案）
 st.markdown(
     """
     <p style="font-size:11px;color:#777;margin-top:30px;text-align:center;opacity:0.8;">
