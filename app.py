@@ -523,11 +523,15 @@ if uploaded_file is not None:
         # 不显示 Pandas 默认 index
         st.markdown('<div class="pm-table-wrapper">', unsafe_allow_html=True)
 
+        # 使用三列布局，让表格整体居中
+        c1, c2, c3 = st.columns([1, 5, 1])
+        with c2:
         st.dataframe(
         result_df,
         use_container_width=True,
         hide_index=True
         )
+
 
         st.markdown('</div>', unsafe_allow_html=True)
 
