@@ -360,18 +360,24 @@ def get_col(df, candidates):
 
 # ========== 核心处理函数 ==========
 def process_data(file):
-    # 读取文件：对奇怪字符更宽容一点
+    # 读取文件
     try:
         if file.name.lower().endswith('.csv'):
+            # 第一次尝试 UTF-8
             try:
+                file.seek(0)  # 指针回到文件开头
                 df = pd.read_csv(file, encoding='utf-8')
             except Exception:
+                # 回退到备用编码前，再次把指针拉回文件开头
+                file.seek(0)
                 df = pd.read_csv(file, encoding='ISO-8859-1')
         else:
+            file.seek(0)
             df = pd.read_excel(file, engine='openpyxl')
     except Exception as e:
         st.error(f"读取失败: {e}")
         return None
+
 
     # 去掉列名空格
     df.columns = df.columns.str.strip()
