@@ -194,9 +194,26 @@ div[data-testid="stNotification"] p {
     background-color: #111827 !important;
 }
 
-/* TOTAL 行加粗 */
+/* TOTAL 行高亮：加粗 + 顶部分隔线 + 深底色 */
 [data-testid="stDataFrame"] tbody tr:last-child td {
     font-weight: 600 !important;
+    background-color: #020617 !important;
+    border-top: 1px solid #4b5563 !important;
+}
+
+/* ===== 汇总概览：整体居中 ===== */
+.pm-summary {
+    margin-top: 6px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+.pm-summary-title {
+    font-size: 16px;
+    font-weight: 600;
+}
+.pm-summary-text {
+    font-size: 13px;
+    color: #cccccc;
 }
 
 /* =====（可选）隐藏 Streamlit 默认菜单/页脚，让界面更像独立系统 ===== */
@@ -233,7 +250,7 @@ def check_login():
             st.session_state["login_success"] = False
             st.error("❌ 用户名或密码错误，请重试。")
 
-    # 未登录：显示居中登录表单（保留你原来的文案）
+    # 未登录：显示居中登录表单（保留原文案）
     if not st.session_state["login_success"]:
         # 顶部标题说明
         st.markdown(
@@ -286,7 +303,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# HS CODE 说明（保留你写好的文字）
+# HS CODE 说明
 st.markdown("""
 <div class="pm-info-card">
 💡 <b>重要提醒：HS CODE源文件数据可能存在不准确的情况</b><br><br>
@@ -299,7 +316,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 上传区域卡片（保留文案）
+# 上传区域卡片
 st.markdown("""
 <div class="pm-card">
   <div class="pm-section-title">📤 上传 Manifest 文件</div>
@@ -465,6 +482,10 @@ def process_data(file):
     }])
     summary = pd.concat([summary, total_row], ignore_index=True)
 
+    # ===== 添加序号列：分类从 1 开始，TOTAL 不编号 =====
+    summary.insert(0, "No.", "")
+    summary.loc[summary.index[:-1], "No."] = range(1, len(summary))
+
     return summary
 
 
@@ -484,21 +505,23 @@ if uploaded_file is not None:
         total_unit = result_df.loc[result_df["Goods of Description"] == "TOTAL", "Unit"].iloc[0]
         total_amount = result_df.loc[result_df["Goods of Description"] == "TOTAL", "Amount"].iloc[0]
 
+        # 居中的汇总概览
         st.markdown(
             f"""
-            <div style='margin-top:6px;margin-bottom:12px;'>
-                <span style='font-size:16px;font-weight:600;'>📊 本次汇总概览</span><br>
-                <span style='font-size:13px;color:#cccccc;'>
+            <div class="pm-summary">
+                <div class="pm-summary-title">📊 本次汇总概览</div>
+                <div class="pm-summary-text">
                     共 <b>{len(result_df) - 1}</b> 个分类，
                     总数量 <b>{int(total_unit)}</b> 件，
                     总金额 <b>{total_amount:,.2f}</b>
-                </span>
+                </div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        st.dataframe(result_df, use_container_width=True)
+        # 不显示 Pandas 默认 index
+        st.dataframe(result_df, use_container_width=True, hide_index=True)
 
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
@@ -512,7 +535,7 @@ if uploaded_file is not None:
             type="primary"
         )
 
-# 底部说明（保留你的文案）
+# 底部说明
 st.markdown(
     """
     <p style="font-size:11px;color:#777;margin-top:30px;text-align:center;opacity:0.8;">
