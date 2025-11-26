@@ -237,6 +237,39 @@ div[data-testid="stNotification"] p {
 footer {visibility: hidden;}
 header {visibility: hidden;}
 */
+
+st.markdown("""
+<style>
+
+/* =======（你原来的所有 CSS）======== */
+.pm-hero { ... }
+.pm-info-card { ... }
+...省略...
+
+/* =======（把我给你的新代码粘贴在这里）======== */
+
+/* 隐藏顶部 Streamlit 菜单、白条、About 等 */
+#MainMenu {visibility: hidden;}
+header {visibility: hidden;}
+footer {visibility: hidden;}
+
+/* 隐藏右上角所有按钮 (Fork / GitHub / Deploy / Settings) */
+[data-testid="stToolbar"] {visibility: hidden !important;}
+button[kind="header"] {display:none !important;}
+
+/* 隐藏右下角头像 */
+#stDecoration {display: none !important;}
+
+/* 隐藏 App 右下角的 Streamlit Logo */
+footer {visibility: hidden !important;}
+
+/* 避免空白区域占位 */
+[data-testid="stStatusWidget"] {display:none !important;}
+
+</style>
+""", unsafe_allow_html=True)
+
+
 </style>
 """, unsafe_allow_html=True)
 
