@@ -491,7 +491,7 @@ if uploaded_file is not None:
                 <span style='font-size:13px;color:#cccccc;'>
                     共 <b>{len(result_df) - 1}</b> 个分类，
                     总数量 <b>{int(total_unit)}</b> 件，
-                    总金额约 <b>{total_amount:,.2f}</b>
+                    总金额 <b>{total_amount:,.2f}</b>
                 </span>
             </div>
             """,
