@@ -364,9 +364,9 @@ def process_data(file):
     try:
         if file.name.lower().endswith('.csv'):
             try:
-                df = pd.read_csv(file, encoding='utf-8', errors='ignore')
+                df = pd.read_csv(file, encoding='utf-8')
             except Exception:
-                df = pd.read_csv(file, encoding='ISO-8859-1', errors='ignore')
+                df = pd.read_csv(file, encoding='ISO-8859-1')
         else:
             df = pd.read_excel(file, engine='openpyxl')
     except Exception as e:
